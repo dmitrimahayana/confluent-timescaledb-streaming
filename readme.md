@@ -18,6 +18,10 @@ docker exec -it broker-confluent bash -lc \
 docker exec -it broker-confluent bash -lc \
 'kafka-topics --bootstrap-server broker-confluent:9092 --describe --topic stock-topic'
 
+## Delete topic
+docker exec -it broker-confluent bash -lc \
+'kafka-topics --bootstrap-server broker-confluent:9092 --delete --topic stock-topic'
+
 # Python ENV
 ## Prepare venv
 uv venv ./venv --python 3.11
