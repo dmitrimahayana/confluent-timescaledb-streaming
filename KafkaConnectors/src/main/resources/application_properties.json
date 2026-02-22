@@ -1,6 +1,6 @@
 [
   {
-    "PropertyGroupId": "InputKafka0",
+    "PropertyGroupId": "localKafka",
     "PropertyMap": {
       "topic": "stock-topic",
       "bootstrap.servers": "localhost:9092",
@@ -8,14 +8,15 @@
     }
   },
   {
-    "PropertyGroupId": "OutputKafka0",
+    "PropertyGroupId": "DockerKafka",
     "PropertyMap": {
       "topic": "stock-topic",
-      "bootstrap.servers": "llocalhost:9092"
+      "bootstrap.servers": "broker:9092",
+      "group.id": "flink-stock-topic"
     }
   },
   {
-    "PropertyGroupId": "JdbcPostgresSink",
+    "PropertyGroupId": "LocalJdbcPostgresSink",
     "PropertyMap": {
       "url": "jdbc:postgresql://localhost:15432/postgres",
       "username": "postgres",
@@ -27,9 +28,21 @@
     }
   },
   {
-    "PropertyGroupId": "JdbcTimescaleDBSink",
+    "PropertyGroupId": "LocalJdbcTimescaleDBSink",
     "PropertyMap": {
       "url": "jdbc:postgresql://localhost:25432/postgres",
+      "username": "postgres",
+      "password": "postgres",
+      "table.name": "ohlcv_bars",
+      "batch.size": "100",
+      "batch.interval.ms": "200",
+      "max.retries": "5"
+    }
+  },
+  {
+    "PropertyGroupId": "DockerJdbcTimescaleDBSink",
+    "PropertyMap": {
+      "url": "jdbc:postgresql://timescaledb:5432/postgres",
       "username": "postgres",
       "password": "postgres",
       "table.name": "ohlcv_bars",

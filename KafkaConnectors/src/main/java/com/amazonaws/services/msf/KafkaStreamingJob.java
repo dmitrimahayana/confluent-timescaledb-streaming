@@ -52,7 +52,8 @@ public class KafkaStreamingJob {
 
 
     private static boolean isLocal(StreamExecutionEnvironment env) {
-        return env instanceof LocalStreamEnvironment;
+        // return env instanceof LocalStreamEnvironment;
+        return true;
     }
 
 
@@ -172,30 +173,32 @@ public class KafkaStreamingJob {
         Properties authProperties = applicationProperties.getOrDefault("AuthProperties", new Properties());
 
         // Prepare the Source and Sink properties
-        Properties inputProperties = mergeProperties(applicationProperties.get("InputKafka0"), authProperties);
-        Properties outputProperties = mergeProperties(applicationProperties.get("OutputKafka0"), authProperties);
+        Properties inputProperties = mergeProperties(applicationProperties.get("DockerKafka"), authProperties);
+        // Properties inputProperties = mergeProperties(applicationProperties.get("localKafka"), authProperties);
+        // Properties outputProperties = mergeProperties(applicationProperties.get("OutputKafka0"), authProperties);
 
         // Create and add the Source
         OffsetsInitializer offsetKafka = isLocal(env) ? OffsetsInitializer.earliest() : DEFAULT_OFFSETS_INITIALIZER;
         KafkaSource<StockPrice> source = createKafkaSource(inputProperties, offsetKafka, new JsonDeserializationSchema<>(StockPrice.class));
         DataStream<StockPrice> stockStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka source");
 
-        KafkaRecordSerializationSchema<StockPrice> recordSerializationSchema = KafkaRecordSerializationSchema.<StockPrice>builder()
-                .setTopic(outputProperties.getProperty("topic", DEFAULT_SINK_TOPIC))
-                // Use a field as kafka record key
-                // Define no keySerializationSchema to publish kafka records with no key
-                .setKeySerializationSchema(stock -> (
-                    stock.getSymbol() + "|" +
-                    stock.getWindowStart() + "|" +
-                    stock.getWindowEnd()).getBytes())
-                // Serialize the Kafka record value (payload) as JSON
-                .setValueSerializationSchema(new JsonSerializationSchema<>())
-                .build();
+        // KafkaRecordSerializationSchema<StockPrice> recordSerializationSchema = KafkaRecordSerializationSchema.<StockPrice>builder()
+        //         .setTopic(outputProperties.getProperty("topic", DEFAULT_SINK_TOPIC))
+        //         // Use a field as kafka record key
+        //         // Define no keySerializationSchema to publish kafka records with no key
+        //         .setKeySerializationSchema(stock -> (
+        //             stock.getSymbol() + "|" +
+        //             stock.getWindowStart() + "|" +
+        //             stock.getWindowEnd()).getBytes())
+        //         // Serialize the Kafka record value (payload) as JSON
+        //         .setValueSerializationSchema(new JsonSerializationSchema<>())
+        //         .build();
                     
         
         // Create the JDBC sink
-        // Properties sinkProperties = applicationProperties.get("JdbcPostgresSink");
-        Properties sinkProperties = applicationProperties.get("JdbcTimescaleDBSink");
+        // Properties sinkProperties = applicationProperties.get("LocalJdbcPostgresSink");
+        // Properties sinkProperties = applicationProperties.get("LocalJdbcTimescaleDBSink");
+        Properties sinkProperties = applicationProperties.get("DockerJdbcTimescaleDBSink");
         JdbcSink<StockPrice> jdbcSink = createUpsertJdbcSink(sinkProperties);
         // Attach the sink
         stockStream.sinkTo(jdbcSink).uid("jdbc-sink").name("PostgreSQL Sink");

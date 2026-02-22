@@ -97,3 +97,8 @@ SELECT *
 FROM ohlcv_1m
 ORDER BY bucket DESC;
 ```
+
+## Connect docker Timescaledb to Confluent network
+```
+docker network connect confluent_default timescaledb
+```

@@ -57,15 +57,17 @@
     </plugins>
   </build>
   <properties>
-    <maven.compiler.target>${target.java.version}</maven.compiler.target>
-    <maven.compiler.source>${target.java.version}</maven.compiler.source>
     <kafka.connector.version>3.2.0-1.19</kafka.connector.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <log4j.version>2.17.2</log4j.version>
+    <maven.compiler.source>${target.java.version}</maven.compiler.source>
     <jar.finalName>${project.name}-${project.version}</jar.finalName>
-    <buildDirectory>${project.basedir}/target</buildDirectory>
-    <target.java.version>17</target.java.version>
     <flink.version>1.20.0</flink.version>
+    <maven.compiler.target>${target.java.version}</maven.compiler.target>
+    <flink.jdbc.connector.version>3.3.0-1.20</flink.jdbc.connector.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <postgresql.jdbc.driver.version>42.7.2</postgresql.jdbc.driver.version>
+    <log4j.version>2.17.2</log4j.version>
+    <buildDirectory>${project.basedir}/target</buildDirectory>
+    <target.java.version>11</target.java.version>
     <kda.runtime.version>1.2.0</kda.runtime.version>
   </properties>
 </project>
