@@ -176,6 +176,9 @@ public class KafkaStreamingJob {
         Properties inputProperties = mergeProperties(applicationProperties.get("DockerKafka"), authProperties);
         // Properties inputProperties = mergeProperties(applicationProperties.get("localKafka"), authProperties);
         // Properties outputProperties = mergeProperties(applicationProperties.get("OutputKafka0"), authProperties);
+        Properties sinkProperties = applicationProperties.get("DockerJdbcTimescaleDBSink");
+        // Properties sinkProperties = applicationProperties.get("LocalJdbcPostgresSink");
+        // Properties sinkProperties = applicationProperties.get("LocalJdbcTimescaleDBSink");
 
         // Create and add the Source
         OffsetsInitializer offsetKafka = isLocal(env) ? OffsetsInitializer.earliest() : DEFAULT_OFFSETS_INITIALIZER;
@@ -194,11 +197,7 @@ public class KafkaStreamingJob {
         //         .setValueSerializationSchema(new JsonSerializationSchema<>())
         //         .build();
                     
-        
         // Create the JDBC sink
-        // Properties sinkProperties = applicationProperties.get("LocalJdbcPostgresSink");
-        // Properties sinkProperties = applicationProperties.get("LocalJdbcTimescaleDBSink");
-        Properties sinkProperties = applicationProperties.get("DockerJdbcTimescaleDBSink");
         JdbcSink<StockPrice> jdbcSink = createUpsertJdbcSink(sinkProperties);
         // Attach the sink
         stockStream.sinkTo(jdbcSink).uid("jdbc-sink").name("PostgreSQL Sink");
