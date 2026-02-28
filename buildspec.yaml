@@ -1,0 +1,94 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+      java: corretto11
+    commands:
+      - echo "Installing AWS SAM and AWS CLI v2"
+      - wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+      - unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
+      - ./sam-installation/install --update
+      - /usr/local/bin/sam --version
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - aws --version
+      - pip install awscli --upgrade
+
+  pre_build:
+    commands:
+      - echo "Packaging SAM template..."
+      - sam build
+      - >
+        sam package
+        --output-template-file cft.yaml 
+        --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-202505130910
+
+  build:
+    commands:
+      - echo "Running mvn build for Flink Alarm Stock Java JAR"
+      - cd ./flink_alarm_stock_java/
+      - mvn clean package
+      - cd ../
+      - echo "Locating generated Flink ZIP file..."
+      - ALARM_FLINK_JAVA_KEY=$(find ./flink_alarm_stock_java/target -maxdepth 1 -type f -name "managed-flink-alarm-stock-java*.jar" -exec basename {} \;)
+      - echo "Detected ZIP $ALARM_FLINK_JAVA_KEY"
+      - echo "ALARM_FLINK_JAVA_KEY=$ALARM_FLINK_JAVA_KEY" > ./variables_alarm.env
+      - echo "Uploading Flink app ZIP to S3"
+      - aws s3 cp "./flink_alarm_stock_java/target/$ALARM_FLINK_JAVA_KEY" "s3://kafka-flink-stock-app/alarm_stock_java_jar/$ALARM_FLINK_JAVA_KEY"
+      - echo Flink ZIP successfully uploaded "s3://kafka-flink-stock-app/alarm_stock_java_jar/$ALARM_FLINK_JAVA_KEY"
+
+  post_build:
+    commands:
+      - echo "Updating Flink stock Application with new S3 path"
+      - |
+        set -e  # Optional: fail fast on any error
+      - |
+        . ./variables_alarm.env
+        FLINK_ALARM_APP_JAVA_NAME="prod-alarm-flink-java"
+        FLINK_BUCKET="kafka-flink-stock-app"
+
+        echo "Checking current deployed Flink artifact..."
+        CURRENT_KEY=$(aws kinesisanalyticsv2 describe-application \
+          --application-name "$FLINK_ALARM_APP_JAVA_NAME" \
+          --query 'ApplicationDetail.ApplicationConfigurationDescription.ApplicationCodeConfigurationDescription.CodeContentDescription.S3ApplicationCodeLocationDescription.FileKey' \
+          --output text)
+        echo "Current deployed Flink ZIP: $CURRENT_KEY"
+        echo "New ZIP to deploy: $ALARM_FLINK_JAVA_KEY"
+        CURRENT_KEY=$(basename "$CURRENT_KEY")
+        ALARM_FLINK_JAVA_KEY=$(basename "$ALARM_FLINK_JAVA_KEY")
+
+        if [ "$CURRENT_KEY" != "$ALARM_FLINK_JAVA_KEY" ]; then
+          echo "Artifact changed. Updating Flink configuration..."
+          CURRENT_VERSION_ID=$(aws kinesisanalyticsv2 describe-application \
+            --application-name "$FLINK_ALARM_APP_JAVA_NAME" \
+            --query 'ApplicationDetail.ApplicationVersionId' \
+            --output text)
+          
+          aws kinesisanalyticsv2 update-application \
+            --application-name "$FLINK_ALARM_APP_JAVA_NAME" \
+            --current-application-version-id "$CURRENT_VERSION_ID" \
+            --application-configuration-update '{
+                "ApplicationCodeConfigurationUpdate": {
+                    "CodeContentUpdate": {
+                        "S3ContentLocationUpdate": {
+                            "BucketARNUpdate": "arn:aws:s3:::'"$FLINK_BUCKET"'",
+                            "FileKeyUpdate": "alarm_stock_java_jar/'"$ALARM_FLINK_JAVA_KEY"'"
+                        }
+                    },
+                    "CodeContentTypeUpdate": "ZIPFILE"
+                }
+            }'
+            echo "Flink app updated."
+        else
+          echo "Same artifact. Skipping Flink update."
+        fi
+      - echo "Build completed on $(date)"
+      - echo "Build $FLINK_ALARM_APP_JAVA_NAME completed on $(date)"
+
+artifacts:
+  type: zip
+  files:
+    - cft.yaml
+  discard-paths: yes
