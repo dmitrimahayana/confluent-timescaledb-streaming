@@ -25,8 +25,6 @@ public class StockPriceDB implements JdbcQueryStatement<StockPrice> {
         "  volume       = EXCLUDED.volume,\n" + 
         "  vwap         = EXCLUDED.vwap,\n" + 
         "  ingestion_ts = EXCLUDED.ingestion_ts;";
-            // "INSERT INTO %s (symbol, price, timestamp) VALUES (?, ?, ?) " +
-                    // "ON CONFLICT(symbol) DO UPDATE SET price = ?, timestamp = ?";
 
     private final String sql;
     private final JdbcStatementBuilder<StockPrice> statementBuilder = new JdbcStatementBuilder<StockPrice>() {

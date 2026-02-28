@@ -14,11 +14,11 @@ import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.core.datastream.sink.JdbcSink;
 import org.apache.flink.connector.jdbc.datasource.connections.SimpleJdbcConnectionProvider;
-import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+// import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
-import org.apache.flink.formats.json.JsonSerializationSchema;
+// import org.apache.flink.formats.json.JsonSerializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.LocalStreamEnvironment;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -52,8 +52,8 @@ public class KafkaStreamingJob {
 
 
     private static boolean isLocal(StreamExecutionEnvironment env) {
-        // return env instanceof LocalStreamEnvironment;
-        return true;
+        return env instanceof LocalStreamEnvironment;
+        // return true;
     }
 
 
@@ -203,7 +203,7 @@ public class KafkaStreamingJob {
         stockStream.sinkTo(jdbcSink).uid("jdbc-sink").name("PostgreSQL Sink");
 
         if (isLocal(env)) {
-            stockStream.print("<< DEBUG ALERT_1_MINSTREAM >>");
+            stockStream.print("<< DEBUG stock_stream >>");
         }
         // Create and add the Sink
         // KafkaSink<StockPrice> sink = createKafkaSink(outputProperties, recordSerializationSchema);

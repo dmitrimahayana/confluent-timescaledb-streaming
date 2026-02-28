@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 
-// @JsonIgnoreProperties(ignoreUnknown = true)
 public class StockPrice {
     private String symbol;
     private long windowStart;
